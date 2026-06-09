@@ -168,7 +168,7 @@ class MultiAgentTripPlanner:
             self.amap_tool = MCPTool(
                 name="amap",
                 description="高德地图服务",
-                server_command=["C:\\Users\\Administrator\\AppData\\Local\\Python\\pythoncore-3.14-64\\Scripts\\amap-mcp-server.exe"],
+                server_command=[settings.amap_mcp_command],
                 env={"AMAP_MAPS_API_KEY": settings.amap_api_key},
                 auto_expand=True
             )
