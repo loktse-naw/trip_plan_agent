@@ -432,7 +432,7 @@ const loadAttractionPhotos = async () => {
 
   tripPlan.value.days.forEach(day => {
     day.attractions.forEach(attraction => {
-      const promise = fetch(`http://localhost:8000/api/poi/photo?name=${encodeURIComponent(attraction.name)}`)
+      const promise = fetch(`/api/poi/photo?name=${encodeURIComponent(attraction.name)}`)
         .then(res => res.json())
         .then(data => {
           if (data.success && data.data.photo_url) {
@@ -480,7 +480,10 @@ const getAttractionImage = (name: string, index: number): string => {
     <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="bold" fill="white">${name}</text>
   </svg>`
 
-  return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`
+  // 使用 TextEncoder 替代废弃的 unescape，兼容现代浏览器
+  const utf8Bytes = new TextEncoder().encode(svg)
+  const binaryStr = String.fromCharCode(...utf8Bytes)
+  return `data:image/svg+xml;base64,${btoa(binaryStr)}`
 }
 
 // 图片加载失败时的处理

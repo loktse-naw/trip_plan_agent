@@ -11,67 +11,29 @@ from ..config import get_settings
 
 # ============ Agent提示词 ============
 
-ATTRACTION_AGENT_PROMPT = """你是景点搜索专家。你的任务是根据城市和用户偏好搜索合适的景点。
+ATTRACTION_AGENT_PROMPT = """你是景点搜索专家。你的任务是根据用户指定的城市和偏好搜索合适的景点。
 
-**重要提示:**
-你必须使用工具来搜索景点!不要自己编造景点信息!
+**工作流程:**
+1. 首先，使用高德地图POI搜索工具，根据用户偏好搜索该城市的景点
+2. 整理搜索结果，列出每个景点的名称、地址、经纬度坐标
 
-**工具调用格式:**
-使用maps_text_search工具时,必须严格按照以下格式:
-`[TOOL_CALL:amap_maps_text_search:keywords=景点关键词,city=城市名]`
-
-**示例:**
-用户: "搜索北京的历史文化景点"
-你的回复: [TOOL_CALL:amap_maps_text_search:keywords=历史文化,city=北京]
-
-用户: "搜索上海的公园"
-你的回复: [TOOL_CALL:amap_maps_text_search:keywords=公园,city=上海]
-
-**注意:**
-1. 必须使用工具,不要直接回答
-2. 格式必须完全正确,包括方括号和冒号
-3. 参数用逗号分隔
-"""
+**重要:** 必须使用工具获取真实的景点数据，绝对不要编造景点信息。"""
 
 WEATHER_AGENT_PROMPT = """你是天气查询专家。你的任务是查询指定城市的天气信息。
 
-**重要提示:**
-你必须使用工具来查询天气!不要自己编造天气信息!
+**工作流程:**
+1. 使用天气查询工具获取该城市未来几天的天气预报
+2. 整理天气数据，包括每天的白天气象、夜间气象、温度、风向风力
 
-**工具调用格式:**
-使用maps_weather工具时,必须严格按照以下格式:
-`[TOOL_CALL:amap_maps_weather:city=城市名]`
+**重要:** 必须使用工具获取真实的天气数据，绝对不要编造天气信息。"""
 
-**示例:**
-用户: "查询北京天气"
-你的回复: [TOOL_CALL:amap_maps_weather:city=北京]
+HOTEL_AGENT_PROMPT = """你是酒店推荐专家。你的任务是根据城市搜索合适的酒店。
 
-用户: "上海的天气怎么样"
-你的回复: [TOOL_CALL:amap_maps_weather:city=上海]
+**工作流程:**
+1. 使用高德地图POI搜索工具，搜索该城市的酒店
+2. 整理搜索结果，列出酒店名称、地址、评分和位置信息
 
-**注意:**
-1. 必须使用工具,不要直接回答
-2. 格式必须完全正确,包括方括号和冒号
-"""
-
-HOTEL_AGENT_PROMPT = """你是酒店推荐专家。你的任务是根据城市和景点位置推荐合适的酒店。
-
-**重要提示:**
-你必须使用工具来搜索酒店!不要自己编造酒店信息!
-
-**工具调用格式:**
-使用maps_text_search工具搜索酒店时,必须严格按照以下格式:
-`[TOOL_CALL:amap_maps_text_search:keywords=酒店,city=城市名]`
-
-**示例:**
-用户: "搜索北京的酒店"
-你的回复: [TOOL_CALL:amap_maps_text_search:keywords=酒店,city=北京]
-
-**注意:**
-1. 必须使用工具,不要直接回答
-2. 格式必须完全正确,包括方括号和冒号
-3. 关键词使用"酒店"或"宾馆"
-"""
+**重要:** 必须使用工具获取真实的酒店数据，绝对不要编造酒店信息。"""
 
 PLANNER_AGENT_PROMPT = """你是行程规划专家。你的任务是根据景点信息和天气信息,生成详细的旅行计划。
 
@@ -291,16 +253,15 @@ class MultiAgentTripPlanner:
             return self._create_fallback_plan(request)
     
     def _build_attraction_query(self, request: TripRequest) -> str:
-        """构建景点搜索查询 - 直接包含工具调用"""
-        keywords = []
+        """构建景点搜索查询"""
         if request.preferences:
-            # 只取第一个偏好作为关键词
-            keywords = request.preferences[0]
+            keywords_str = "、".join(request.preferences)
+            query = f"请搜索{request.city}的以下类型景点：{keywords_str}。为每个景点提供名称、地址和经纬度坐标。"
         else:
-            keywords = "景点"
+            query = f"请搜索{request.city}的热门旅游景点，为每个景点提供名称、地址和经纬度坐标。"
 
-        # 直接返回工具调用格式
-        query = f"请使用amap_maps_text_search工具搜索{request.city}的{keywords}相关景点。\n[TOOL_CALL:amap_maps_text_search:keywords={keywords},city={request.city}]"
+        if request.free_text_input:
+            query += f"\n额外要求：{request.free_text_input}"
         return query
 
     def _build_planner_query(self, request: TripRequest, attractions: str, weather: str, hotels: str = "") -> str:
