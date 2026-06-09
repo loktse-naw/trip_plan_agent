@@ -1,5 +1,6 @@
 """多智能体旅行规划系统"""
 
+import sys
 import json
 from typing import Dict, Any, List
 from hello_agents import SimpleAgent
@@ -169,8 +170,17 @@ class MultiAgentTripPlanner:
                 tool = MCPTool(
                     name="amap",
                     description="高德地图服务",
-                    server_command=[settings.amap_mcp_command],
-                    env={"AMAP_MAPS_API_KEY": settings.amap_api_key},
+                    server_command=[sys.executable, "-m", "amap_mcp_server"],
+                    env={
+                        "AMAP_MAPS_API_KEY": settings.amap_api_key,
+                        # 清除代理环境变量，防止MCP子进程走不可用的SOCKS代理
+                        "all_proxy": "",
+                        "ALL_PROXY": "",
+                        "http_proxy": "",
+                        "HTTP_PROXY": "",
+                        "https_proxy": "",
+                        "HTTPS_PROXY": "",
+                    },
                     auto_expand=True
                 )
                 tool.expandable = True

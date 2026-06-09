@@ -1,5 +1,6 @@
 """高德地图MCP服务封装"""
 
+import sys
 import json
 import re
 from typing import List, Dict, Any, Optional
@@ -30,8 +31,17 @@ def get_amap_mcp_tool() -> MCPTool:
         _amap_mcp_tool = MCPTool(
             name="amap",
             description="高德地图服务,支持POI搜索、路线规划、天气查询等功能",
-            server_command=[settings.amap_mcp_command],
-            env={"AMAP_MAPS_API_KEY": settings.amap_api_key},
+            server_command=[sys.executable, "-m", "amap_mcp_server"],
+            env={
+                "AMAP_MAPS_API_KEY": settings.amap_api_key,
+                # 清除代理环境变量，防止MCP子进程走不可用的SOCKS代理
+                "all_proxy": "",
+                "ALL_PROXY": "",
+                "http_proxy": "",
+                "HTTP_PROXY": "",
+                "https_proxy": "",
+                "HTTPS_PROXY": "",
+            },
             auto_expand=True  # 自动展开为独立工具
         )
         

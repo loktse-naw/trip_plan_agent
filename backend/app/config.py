@@ -33,8 +33,6 @@ class Settings(BaseSettings):
 
     # 高德地图API配置
     amap_api_key: str = ""
-    # 高德地图MCP服务器命令 (可执行文件名或完整路径，默认使用PATH中的amap-mcp-server)
-    amap_mcp_command: str = "amap-mcp-server"
 
     # Unsplash API配置
     unsplash_access_key: str = ""
@@ -100,7 +98,6 @@ def print_config():
     print(f"版本: {settings.app_version}")
     print(f"服务器: {settings.host}:{settings.port}")
     print(f"高德地图API Key: {'已配置' if settings.amap_api_key else '未配置'}")
-    print(f"高德地图MCP命令: {settings.amap_mcp_command}")
 
     # 检查LLM配置
     llm_api_key = os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
