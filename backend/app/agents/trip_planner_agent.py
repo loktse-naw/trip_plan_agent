@@ -162,17 +162,19 @@ class MultiAgentTripPlanner:
         try:
             settings = get_settings()
             self.llm = get_llm()
+            self._settings = settings
 
-            # 创建共享的MCP工具(只创建一次)
-            print("  - 创建共享MCP工具...")
-            self.amap_tool = MCPTool(
-                name="amap",
-                description="高德地图服务",
-                server_command=[settings.amap_mcp_command],
-                env={"AMAP_MAPS_API_KEY": settings.amap_api_key},
-                auto_expand=True
-            )
-            self.amap_tool.expandable=True
+            # 为每个Agent创建独立的MCP工具实例，避免共享连接导致后续Agent无法调用工具
+            def _create_amap_tool():
+                tool = MCPTool(
+                    name="amap",
+                    description="高德地图服务",
+                    server_command=[settings.amap_mcp_command],
+                    env={"AMAP_MAPS_API_KEY": settings.amap_api_key},
+                    auto_expand=True
+                )
+                tool.expandable = True
+                return tool
 
             # 创建景点搜索Agent
             print("  - 创建景点搜索Agent...")
@@ -181,7 +183,7 @@ class MultiAgentTripPlanner:
                 llm=self.llm,
                 system_prompt=ATTRACTION_AGENT_PROMPT
             )
-            self.attraction_agent.add_tool(self.amap_tool)
+            self.attraction_agent.add_tool(_create_amap_tool())
 
             # 创建天气查询Agent
             print("  - 创建天气查询Agent...")
@@ -190,7 +192,7 @@ class MultiAgentTripPlanner:
                 llm=self.llm,
                 system_prompt=WEATHER_AGENT_PROMPT
             )
-            self.weather_agent.add_tool(self.amap_tool)
+            self.weather_agent.add_tool(_create_amap_tool())
 
             # 创建酒店推荐Agent
             print("  - 创建酒店推荐Agent...")
@@ -199,7 +201,7 @@ class MultiAgentTripPlanner:
                 llm=self.llm,
                 system_prompt=HOTEL_AGENT_PROMPT
             )
-            self.hotel_agent.add_tool(self.amap_tool)
+            self.hotel_agent.add_tool(_create_amap_tool())
 
             # 创建行程规划Agent(不需要工具)
             print("  - 创建行程规划Agent...")
